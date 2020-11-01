@@ -1,6 +1,9 @@
-import  sys, datetime
+import datetime
+import sys
+
 import pyowm as pm
-from PyQt5 import QtWidgets,QtGui, QtCore
+from PyQt5 import QtWidgets, QtGui
+
 
 class MainWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
@@ -17,7 +20,7 @@ class MainWindow(QtWidgets.QWidget):
         self.lineEdit_searching.setPlaceholderText('Enter city')
         self.lineEdit_searching.resize(300,20)
         self.lineEdit_searching.setGeometry(int((self.width()-self.lineEdit_searching.width())//2), int((self.height()-self.lineEdit_searching.height())//2), self.lineEdit_searching.width(), self.lineEdit_searching.height())
-
+        self.lineEdit_searching.textEdited.connect(self.textEdited)
         #Setting up table that contains suitable citiesTable_widget
         self.citiesTable_widget = QtWidgets.QListView(self)
         self.citiesTable_widget.resize(300, 200)
@@ -27,7 +30,7 @@ class MainWindow(QtWidgets.QWidget):
         self.citiesTable_widget.setAlternatingRowColors(True) #Colour of rows alternates
         self.container_for_cities = QtGui.QStandardItemModel(self)
         self.citiesTable_widget.setModel(self.container_for_cities)
-        #self.citiesTable_widget.hide()
+        self.citiesTable_widget.hide()
         self.citiesTable_widget.clicked.connect(self.entered)
         #End of city searching widgets
 
@@ -38,14 +41,13 @@ class MainWindow(QtWidgets.QWidget):
         self.lon = float()
         self.id = int()
         self.suitable_cities = list()
-
         self.date = str()
         self.day = int()
         self.month = int()
         self.year = int()
-
         self.sunrise_time = str()
         self.sunset_time = str()
+
     def find_suitable_cities(self):
         self.suitable_cities = []
         self.city = self.lineEdit_searching.text().title()
@@ -85,6 +87,7 @@ class MainWindow(QtWidgets.QWidget):
                     location[index_of_location] = location[index_of_location] + char
             self.suitable_cities[i] = {"city": str(location[0]), 'id': int(location[1]), 'lat': float(location[2]), 'lon': float(location[3]), 'country': str(location[4])}
             i += 1
+
     def get_weather(self):
         config_dict = pm.utils.config.get_default_config()
         config_dict['language'] = 'ru'
@@ -97,16 +100,13 @@ class MainWindow(QtWidgets.QWidget):
 
         one_call = mgr.one_call(self.lat, self.lon)
         for weather in one_call.forecast_daily:
-            self.date = weather.reference_time(timeformat='iso')[
-                        :-15]  # date[:4] - Year, date[5:7] - Month, date[8:10] - day
-            self.day = date[8:10]
-            self.month = date[5:7]
-            self.year = date[:4]
+            self.date = weather.reference_time(timeformat='iso')[:-15]  # date[:4] - Year, date[5:7] - Month, date[8:10] - day
+            self.day = self.date[8:10]
+            self.month = self.date[5:7]
+            self.year = self.date[:4]
             self.temp_day = round(weather.temperature('celsius')['day'])
-            self.sunrise_time = str(datetime.datetime.fromtimestamp(weather.sunrise_time()).time())[
-                                :5]  # I take hours and minutes of sunrise
-            self.sunset_time = str(datetime.datetime.fromtimestamp(weather.sunset_time()).time())[
-                               :5]  # I take hours and minutes of sunset
+            self.sunrise_time = str(datetime.datetime.fromtimestamp(weather.sunrise_time()).time())[:5]  # I take hours and minutes of sunrise
+            self.sunset_time = str(datetime.datetime.fromtimestamp(weather.sunset_time()).time())[:5]  # I take hours and minutes of sunset
             if self.day.startswith('0'): self.day = self.day[1:]
             if self.month.startswith('0'): self.month = self.month[1:]
             if self.sunrise_time.startswith('0'): self.sunrise_time = self.sunrise_time[1:]
@@ -116,21 +116,19 @@ class MainWindow(QtWidgets.QWidget):
         self.lineEdit_searching.hide()
         self.citiesTable_widget.hide()
         self.get_weather()
-    def keyReleaseEvent(self, a0: QtGui.QKeyEvent):
+
+    def textEdited(self):
         if self.lineEdit_searching.text() == '':
             self.citiesTable_widget.hide()
         else: self.citiesTable_widget.show()
-
-        if self.lineEdit_searching.isModified():
-            self.container_for_cities.clear() #Очищаем таблицу от вариантов
-            self.find_suitable_cities()
-
-            #setting up cities to container
-            for i in range(50):
-                if len(self.suitable_cities) > i:
-                    city = self.suitable_cities[i]['country'] + '\t' + self.suitable_cities[i]['city']
-                    flag = QtGui.QIcon('.\\icons\\TitleLogo.png')
-                    self.container_for_cities.appendRow(QtGui.QStandardItem(flag, city))
+        self.container_for_cities.clear() #Очищаем таблицу от вариантов
+        self.find_suitable_cities()
+        #setting up cities to container
+        for i in range(50):
+            if len(self.suitable_cities) > i:
+                city = self.suitable_cities[i]['country'] + '\t' + self.suitable_cities[i]['city']
+                flag = QtGui.QIcon('.\\icons\\TitleLogo.png')
+                self.container_for_cities.appendRow(QtGui.QStandardItem(flag, city))
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainWindow()
