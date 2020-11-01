@@ -9,19 +9,18 @@ class MainWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         #Setting up main window
         QtWidgets.QWidget.__init__(self, parent)
-        self.setFixedSize(800, 600) #Set fixed size of main window
-        self.setWindowTitle('Weather') #Set Title name of main window
+        self.setFixedSize(800, 600)
+        self.setWindowTitle('Weather')
         self.TitleLogo = QtGui.QIcon('.\\icons\\TitleLogo.png')
         self.setWindowIcon(self.TitleLogo)
 
-        #Start of city searching widgets
-        #Setting up of lineEdit
+        #Setting up the lineEdit
         self.lineEdit_searching = QtWidgets.QLineEdit(self)
         self.lineEdit_searching.setPlaceholderText('Enter city')
         self.lineEdit_searching.resize(300,20)
         self.lineEdit_searching.setGeometry(int((self.width()-self.lineEdit_searching.width())//2), int((self.height()-self.lineEdit_searching.height())//2), self.lineEdit_searching.width(), self.lineEdit_searching.height())
         self.lineEdit_searching.textEdited.connect(self.textEdited)
-        #Setting up table that contains suitable citiesTable_widget
+        #Setting up widget that contains suitable citiesTable_widget
         self.citiesTable_widget = QtWidgets.QListView(self)
         self.citiesTable_widget.resize(300, 200)
         self.citiesTable_widget.setGeometry(int((self.width() - self.citiesTable_widget.width()) // 2), int((self.height() - self.lineEdit_searching.height()) // 2 + self.lineEdit_searching.height()), self.citiesTable_widget.width(), self.citiesTable_widget.height())
@@ -32,7 +31,6 @@ class MainWindow(QtWidgets.QWidget):
         self.citiesTable_widget.setModel(self.container_for_cities)
         self.citiesTable_widget.hide()
         self.citiesTable_widget.clicked.connect(self.entered)
-        #End of city searching widgets
 
         #setting Up Owm attributs
         self.City = str()
@@ -123,7 +121,7 @@ class MainWindow(QtWidgets.QWidget):
         else: self.citiesTable_widget.show()
         self.container_for_cities.clear() #Очищаем таблицу от вариантов
         self.find_suitable_cities()
-        #setting up cities to container
+        #Adding cities to the widget that contains them
         for i in range(50):
             if len(self.suitable_cities) > i:
                 city = self.suitable_cities[i]['country'] + '\t' + self.suitable_cities[i]['city']
