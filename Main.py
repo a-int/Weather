@@ -14,16 +14,20 @@ class MainWindow(QtWidgets.QWidget):
         self.TitleLogo = QtGui.QIcon('.\\icons\\TitleLogo.png')
         self.setWindowIcon(self.TitleLogo)
 
-        #Setting up the lineEdit
+        #Setting up widgets
         self.lineEdit_searching = QtWidgets.QLineEdit(self)
         self.lineEdit_searching.setPlaceholderText('Enter city')
-        self.lineEdit_searching.resize(300,20)
-        self.lineEdit_searching.setGeometry(int((self.width()-self.lineEdit_searching.width())//2), int((self.height()-self.lineEdit_searching.height())//2), self.lineEdit_searching.width(), self.lineEdit_searching.height())
+        self.lineEdit_searching.setFixedSize(300,20)
+        lineEdit_searching_X_geo =int((self.width()-self.lineEdit_searching.width())//2)
+        lineEdit_searching_Y_geo =int((self.height()-self.lineEdit_searching.height())//2)
+        self.lineEdit_searching.setGeometry(lineEdit_searching_X_geo,lineEdit_searching_Y_geo , self.lineEdit_searching.width(), self.lineEdit_searching.height())
         self.lineEdit_searching.textEdited.connect(self.textEdited)
-        #Setting up widget that contains suitable citiesTable_widget
+
         self.citiesTable_widget = QtWidgets.QListView(self)
-        self.citiesTable_widget.resize(300, 200)
-        self.citiesTable_widget.setGeometry(int((self.width() - self.citiesTable_widget.width()) // 2), int((self.height() - self.lineEdit_searching.height()) // 2 + self.lineEdit_searching.height()), self.citiesTable_widget.width(), self.citiesTable_widget.height())
+        self.citiesTable_widget.setFixedSize(300,200)
+        citiesTable_widget_x_geo = int((self.width() - self.citiesTable_widget.width()) // 2)
+        citiesTable_widget_Y_geo = int((self.height() - self.lineEdit_searching.height())// 2 + self.lineEdit_searching.height())
+        self.citiesTable_widget.setGeometry(citiesTable_widget_x_geo, citiesTable_widget_Y_geo , self.citiesTable_widget.width(), self.citiesTable_widget.height())
         self.citiesTable_widget.setMovement(0) #Preventing moving of lines
         self.citiesTable_widget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
         self.citiesTable_widget.setAlternatingRowColors(True) #Colour of rows alternates
@@ -33,18 +37,16 @@ class MainWindow(QtWidgets.QWidget):
         self.citiesTable_widget.clicked.connect(self.entered)
 
         #setting Up Owm attributs
-        self.City = str()
+        self.city = str()
         self.country = str()
         self.lat = float()
         self.lon = float()
         self.id = int()
         self.suitable_cities = list()
-        self.date = str()
-        self.day = int()
-        self.month = int()
-        self.year = int()
-        self.sunrise_time = str()
-        self.sunset_time = str()
+        self.date = list()
+        self.day = list()
+        self.sunrise_time = list()
+        self.sunset_time = list()
 
     def find_suitable_cities(self):
         self.suitable_cities = []
@@ -75,9 +77,9 @@ class MainWindow(QtWidgets.QWidget):
             self.suitable_cities = self.suitable_cities[:50]
         i = 0
         for string in self.suitable_cities:
-            location = ['' for i in range(5)] #Generate list that looks like [City, id, lat, lon, county]
+            location = ['' for i in range(5)] #Generate list that looks like [city, id, lat, lon, county]
             index_of_location = 0
-            #Clear string that looks like City, La, id, lat, lon, Counry
+            #Clear string that looks like city, La, id, lat, lon, Counry
             for char in string:
                 if char == ',': index_of_location += 1
                 elif index_of_location == 1 and not char.isdigit(): index_of_location = 0
@@ -91,24 +93,24 @@ class MainWindow(QtWidgets.QWidget):
         config_dict['language'] = 'ru'
         owmKey = pm.OWM('41d1b31ac4485832252933721443d6e9', config_dict)
         mgr = owmKey.weather_manager()
-        city = self.container_for_cities.data(self.citiesTable_widget.currentIndex())[3:]
-        country = self.container_for_cities.data(self.citiesTable_widget.currentIndex())[:2]
-        self.lat = owmKey.city_id_registry().locations_for(city)[0].lat
-        self.lon = owmKey.city_id_registry().locations_for(city)[0].lon
+        self.city = self.container_for_cities.data(self.citiesTable_widget.currentIndex())[3:]
+        self.country = self.container_for_cities.data(self.citiesTable_widget.currentIndex())[:2]
+        self.lat = owmKey.city_id_registry().locations_for(self.city)[0].lat
+        self.lon = owmKey.city_id_registry().locations_for(self.city)[0].lon
 
         one_call = mgr.one_call(self.lat, self.lon)
+        i = 0
         for weather in one_call.forecast_daily:
-            self.date = weather.reference_time(timeformat='iso')[:-15]  # date[:4] - Year, date[5:7] - Month, date[8:10] - day
-            self.day = self.date[8:10]
-            self.month = self.date[5:7]
-            self.year = self.date[:4]
+            self.date.append(weather.reference_time(timeformat='iso')[:-15])  # date[:4] - Year, date[5:7] - Month, date[8:10] - day
+            self.day.append(self.date[i][8:10])
             self.temp_day = round(weather.temperature('celsius')['day'])
-            self.sunrise_time = str(datetime.datetime.fromtimestamp(weather.sunrise_time()).time())[:5]  # I take hours and minutes of sunrise
-            self.sunset_time = str(datetime.datetime.fromtimestamp(weather.sunset_time()).time())[:5]  # I take hours and minutes of sunset
-            if self.day.startswith('0'): self.day = self.day[1:]
-            if self.month.startswith('0'): self.month = self.month[1:]
-            if self.sunrise_time.startswith('0'): self.sunrise_time = self.sunrise_time[1:]
-            if self.sunset_time.startswith('0'): self.sunset_time = sunset_time[1:]
+            self.sunrise_time.append(str(datetime.datetime.fromtimestamp(weather.sunrise_time()).time())[:5])  # I take hours and minutes of sunrise
+            self.sunset_time.append(str(datetime.datetime.fromtimestamp(weather.sunset_time()).time())[:5])  # I take hours and minutes of sunset
+            if self.day[i].startswith('0'): self.day[i] = self.day[i][1:]
+            if self.sunrise_time[i].startswith('0'): self.sunrise_time[i] = self.sunrise_time[i][1:]
+            if self.sunset_time[i].startswith('0'): self.sunset_time[i] = sunset_time[i][1:]
+            i+=1
+
     #Setting up Actions after choosing a city
     def entered(self, index):
         self.lineEdit_searching.hide()
