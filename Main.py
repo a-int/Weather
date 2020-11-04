@@ -2,7 +2,7 @@ import datetime
 import sys
 
 import pyowm as pm
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 
 
 class MainWindow(QtWidgets.QWidget):
@@ -36,6 +36,35 @@ class MainWindow(QtWidgets.QWidget):
         self.citiesTable_widget.hide()
         self.citiesTable_widget.clicked.connect(self.entered)
 
+        self.cityLabel = QtWidgets.QLabel(self)
+        self.cityLabel.setFixedSize(100,40)
+        self.cityLabel.setWordWrap(True)
+        self.cityLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.cityLabel.setStyleSheet(""" 
+                                        font: bold italic;
+                                        color: black;
+                                        background-opacity: 1;
+                                    """)
+        self.cityLabel.setGeometry(10, 10, self.cityLabel.width(), self.cityLabel.height())
+        self.cityLabel.hide()
+
+        self.today_status = QtWidgets.QLabel(self)
+        self.today_status.setWordWrap(True)
+        self.today_status.setFixedSize(100,40)
+        self.today_status.setAlignment(QtCore.Qt.AlignCenter)
+        self.today_status.setStyleSheet("""  """)
+        self.today_status.setGeometry(13,50,self.today_status.width(), self.today_status.height())
+        self.today_status.hide()
+
+        self.temperature_now = QtWidgets.QLabel(self)
+        self.temperature_now.setWordWrap(True)
+        self.temperature_now.setFixedSize(100, 100)
+        self.temperature_now.setAlignment(QtCore.Qt.AlignCenter)
+        self.temperature_now.setStyleSheet(""" """)
+        self.temperature_now.setGeometry(10, 90, self.today_status.width(), self.today_status.height())
+        self.temperature_now.hide()
+
+
         #setting Up Owm attributs
         self.city = str()
         self.country = str()
@@ -47,31 +76,35 @@ class MainWindow(QtWidgets.QWidget):
         self.day = list()
         self.sunrise_time = list()
         self.sunset_time = list()
+        self.weather_status = list() #Daily status for every day for a week
+        self.temperatures = list()  #Daily temperatures for every day for a week
+        self.max_temperatures = list() #Dayly max temperatures
+        self.min_temperature = list()   #Daily min temperatures
 
     def find_suitable_cities(self):
         self.suitable_cities = []
-        self.city = self.lineEdit_searching.text().title()
-        if self.city == '': self.city = '0'
+        city = self.lineEdit_searching.text().title()
+        if city == '': city = '0'
 
-        if  97 <= ord(self.city.lower()[0]) <= 102:
+        if  97 <= ord(city.lower()[0]) <= 102:
             self.suitable_cities = []
             for string in open('.\\cities_ids\\097-102.txt', 'r', encoding='UTF8').readlines():
-                if string.startswith(self.city):
+                if string.startswith(city):
                     self.suitable_cities.append(string)
-        if 103 <= ord(self.city.lower()[0]) <= 108:
+        if 103 <= ord(city.lower()[0]) <= 108:
             self.suitable_cities = []
             for string in open('.\\cities_ids\\103-108.txt', 'r', encoding='UTF8').readlines():
-                if string.startswith(self.city):
+                if string.startswith(city):
                     self.suitable_cities.append(string)
-        if 109 <= ord(self.city.lower()[0]) <= 114:
+        if 109 <= ord(city.lower()[0]) <= 114:
             self.suitable_cities = []
             for string in open('.\\cities_ids\\109-114.txt', 'r', encoding='UTF8').readlines():
-                if string.startswith(self.city):
+                if string.startswith(city):
                     self.suitable_cities.append(string)
-        if 115 <= ord(self.city.lower()[0]) <= 122:
+        if 115 <= ord(city.lower()[0]) <= 122:
             self.suitable_cities = list()
             for string in open('.\\cities_ids\\115-122.txt', 'r', encoding='UTF8').readlines():
-                if string.startswith(self.city):
+                if string.startswith(city):
                     self.suitable_cities.append(string)
         if len(self.suitable_cities) > 50:
             self.suitable_cities = self.suitable_cities[:50]
@@ -89,15 +122,18 @@ class MainWindow(QtWidgets.QWidget):
             i += 1
 
     def get_weather(self):
+        self.city = self.container_for_cities.data(self.citiesTable_widget.currentIndex())[3:]
+        self.country = self.container_for_cities.data(self.citiesTable_widget.currentIndex())[:2]
+        for i in range(len(self.suitable_cities)):
+            if self.suitable_cities[i]['city'] == self.city:
+                index = i
+        self.lat = self.suitable_cities[index]['lat']
+        self.lon = self.suitable_cities[index]['lon']
         config_dict = pm.utils.config.get_default_config()
         config_dict['language'] = 'ru'
         owmKey = pm.OWM('41d1b31ac4485832252933721443d6e9', config_dict)
         mgr = owmKey.weather_manager()
-        self.city = self.container_for_cities.data(self.citiesTable_widget.currentIndex())[3:]
-        self.country = self.container_for_cities.data(self.citiesTable_widget.currentIndex())[:2]
-        self.lat = owmKey.city_id_registry().locations_for(self.city)[0].lat
-        self.lon = owmKey.city_id_registry().locations_for(self.city)[0].lon
-
+        self.temperature_now.setNum(mgr.weather_at_place(self.city).weather.temperature('celsius')['temp']) #Get today's temperature
         one_call = mgr.one_call(self.lat, self.lon)
         i = 0
         for weather in one_call.forecast_daily:
@@ -106,9 +142,13 @@ class MainWindow(QtWidgets.QWidget):
             self.temp_day = round(weather.temperature('celsius')['day'])
             self.sunrise_time.append(str(datetime.datetime.fromtimestamp(weather.sunrise_time()).time())[:5])  # I take hours and minutes of sunrise
             self.sunset_time.append(str(datetime.datetime.fromtimestamp(weather.sunset_time()).time())[:5])  # I take hours and minutes of sunset
+            self.weather_status.append(weather.detailed_status)
+            self.min_temperature.append(round(weather.temperature('celsius')['min']))
+            self.temperatures.append(round(weather.temperature('celsius')['day']))
+            self.max_temperatures.append(round(weather.temperature('celsius')['max']))
             if self.day[i].startswith('0'): self.day[i] = self.day[i][1:]
             if self.sunrise_time[i].startswith('0'): self.sunrise_time[i] = self.sunrise_time[i][1:]
-            if self.sunset_time[i].startswith('0'): self.sunset_time[i] = sunset_time[i][1:]
+            if self.sunset_time[i].startswith('0'): self.sunset_time[i] = self.sunset_time[i][1:]
             i+=1
 
     #Setting up Actions after choosing a city
@@ -116,6 +156,11 @@ class MainWindow(QtWidgets.QWidget):
         self.lineEdit_searching.hide()
         self.citiesTable_widget.hide()
         self.get_weather()
+        self.cityLabel.setText(self.city)
+        self.cityLabel.show()
+        self.today_status.setText(self.weather_status[0])
+        self.today_status.show()
+        self.temperature_now.show()
 
     def textEdited(self):
         if self.lineEdit_searching.text() == '':
