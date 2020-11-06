@@ -48,22 +48,61 @@ class MainWindow(QtWidgets.QWidget):
         self.cityLabel.setGeometry(10, 10, self.cityLabel.width(), self.cityLabel.height())
         self.cityLabel.hide()
 
-        self.today_status = QtWidgets.QLabel(self)
-        self.today_status.setWordWrap(True)
-        self.today_status.setFixedSize(100,40)
-        self.today_status.setAlignment(QtCore.Qt.AlignCenter)
-        self.today_status.setStyleSheet("""  """)
-        self.today_status.setGeometry(13,50,self.today_status.width(), self.today_status.height())
-        self.today_status.hide()
+        self.status_of_today = QtWidgets.QLabel(self)
+        self.status_of_today.setWordWrap(True)
+        self.status_of_today.setFixedSize(100, 40)
+        self.status_of_today.setAlignment(QtCore.Qt.AlignCenter)
+        self.status_of_today.setStyleSheet("""  """)
+        self.status_of_today.setGeometry(13, 50, self.status_of_today.width(), self.status_of_today.height())
+        self.status_of_today.hide()
 
         self.temperature_now = QtWidgets.QLabel(self)
         self.temperature_now.setWordWrap(True)
         self.temperature_now.setFixedSize(100, 100)
         self.temperature_now.setAlignment(QtCore.Qt.AlignCenter)
         self.temperature_now.setStyleSheet(""" """)
-        self.temperature_now.setGeometry(10, 90, self.today_status.width(), self.today_status.height())
+        self.temperature_now.setGeometry(10, 90, self.status_of_today.width(), self.status_of_today.height())
         self.temperature_now.hide()
 
+        self.sunrise_time = QtWidgets.QLabel(self)
+        self.sunrise_time.setWordWrap(True)
+        self.sunrise_time.setFixedSize(200, 40)
+        self.sunrise_time.setAlignment(QtCore.Qt.AlignCenter)
+        self.sunrise_time.setStyleSheet("""  """)
+        sunrise_time_X_geo = self.width() - 2 * self.sunrise_time.width()
+        sunrise_time_Y_geo = 53
+        self.sunrise_time.setGeometry(sunrise_time_X_geo, sunrise_time_Y_geo, self.sunrise_time.width(), self.sunrise_time.height())
+        self.sunrise_time.hide()
+
+        self.sunset_time = QtWidgets.QLabel(self)
+        self.sunset_time.setWordWrap(True)
+        self.sunset_time.setFixedSize(200, 40)
+        self.sunset_time.setAlignment(QtCore.Qt.AlignCenter)
+        self.sunset_time.setStyleSheet("""  """)
+        sunset_time_X_geo = self.width() -  self.sunrise_time.width()
+        sunset_time_Y_geo = 53
+        self.sunset_time.setGeometry(sunset_time_X_geo, sunset_time_Y_geo, self.sunset_time.width(),self.sunset_time.height())
+        self.sunset_time.hide()
+
+        self.feels_like_of_today = QtWidgets.QLabel(self)
+        self.feels_like_of_today.setWordWrap(True)
+        self.feels_like_of_today.setFixedSize(200, 40)
+        self.feels_like_of_today.setAlignment(QtCore.Qt.AlignCenter)
+        self.feels_like_of_today.setStyleSheet("""  """)
+        feels_like_of_today_X_geo = self.width() - 2 * self.feels_like_of_today.width()
+        feels_like_of_today_Y_geo = self.feels_like_of_today.height()+ sunset_time_Y_geo
+        self.feels_like_of_today.setGeometry(feels_like_of_today_X_geo, feels_like_of_today_Y_geo, self.feels_like_of_today.width(), self.feels_like_of_today.height())
+        self.feels_like_of_today.hide()
+
+        self.wind_speed = QtWidgets.QLabel(self)
+        self.wind_speed.setWordWrap(True)
+        self.wind_speed.setFixedSize(200, 40)
+        self.wind_speed.setAlignment(QtCore.Qt.AlignCenter)
+        self.wind_speed.setStyleSheet("""  """)
+        wind_speed_X_geo = self.width() - self.wind_speed.width()
+        wind_speed_Y_geo = self.wind_speed.height() + sunset_time_Y_geo
+        self.wind_speed.setGeometry(wind_speed_X_geo, wind_speed_Y_geo, self.wind_speed.width(), self.wind_speed.height())
+        self.wind_speed.hide()
 
         #setting Up Owm attributs
         self.city = str()
@@ -74,13 +113,12 @@ class MainWindow(QtWidgets.QWidget):
         self.suitable_cities = list()
         self.date = list()
         self.day = list()
-        self.sunrise_time = list()
-        self.sunset_time = list()
-        self.weather_status = list() #Daily status for every day for a week
-        self.temperatures = list()  #Daily temperatures for every day for a week
-        self.max_temperatures = list() #Dayly max temperatures
-        self.min_temperature = list()   #Daily min temperatures
+        self.daily_weather_status = list()
+        self.daily_max_temps = list()
+        self.daily_min_temps = list()
 
+        weekday_now = datetime.datetime.isoweekday(datetime.datetime.today())
+        day_of_week = {1: 'Monday', 2:'Tuesday', 3: 'Wednesday', 4: 'Thursday', 5: 'Friday', 6: 'Saturday', 7: 'Sunday'}
     def find_suitable_cities(self):
         self.suitable_cities = []
         city = self.lineEdit_searching.text().title()
@@ -125,7 +163,7 @@ class MainWindow(QtWidgets.QWidget):
         self.city = self.container_for_cities.data(self.citiesTable_widget.currentIndex())[3:]
         self.country = self.container_for_cities.data(self.citiesTable_widget.currentIndex())[:2]
         for i in range(len(self.suitable_cities)):
-            if self.suitable_cities[i]['city'] == self.city:
+            if self.suitable_cities[i]['city'] == self.city and self.suitable_cities[i]['country'] == self.country:
                 index = i
         self.lat = self.suitable_cities[index]['lat']
         self.lon = self.suitable_cities[index]['lon']
@@ -134,21 +172,20 @@ class MainWindow(QtWidgets.QWidget):
         owmKey = pm.OWM('41d1b31ac4485832252933721443d6e9', config_dict)
         mgr = owmKey.weather_manager()
         self.temperature_now.setNum(mgr.weather_at_place(self.city).weather.temperature('celsius')['temp']) #Get today's temperature
+        self.sunrise_time.setText('Sunrise time\n'+str(datetime.datetime.fromtimestamp(mgr.weather_at_place(self.city).weather.sunrise_time()).time())[:5])
+        self.sunset_time.setText('Sunset time\n'+str(datetime.datetime.fromtimestamp(mgr.weather_at_place(self.city).weather.sunset_time()).time())[:5])
+        self.feels_like_of_today.setText('Feels like\n'+str(round(mgr.weather_at_place(self.city).weather.temperature('celsius')['feels_like'])))
+        self.wind_speed.setText('Wind speed\n' + str(mgr.weather_at_place(self.city).weather.wind()['speed']))
         one_call = mgr.one_call(self.lat, self.lon)
         i = 0
         for weather in one_call.forecast_daily:
             self.date.append(weather.reference_time(timeformat='iso')[:-15])  # date[:4] - Year, date[5:7] - Month, date[8:10] - day
             self.day.append(self.date[i][8:10])
             self.temp_day = round(weather.temperature('celsius')['day'])
-            self.sunrise_time.append(str(datetime.datetime.fromtimestamp(weather.sunrise_time()).time())[:5])  # I take hours and minutes of sunrise
-            self.sunset_time.append(str(datetime.datetime.fromtimestamp(weather.sunset_time()).time())[:5])  # I take hours and minutes of sunset
-            self.weather_status.append(weather.detailed_status)
-            self.min_temperature.append(round(weather.temperature('celsius')['min']))
-            self.temperatures.append(round(weather.temperature('celsius')['day']))
-            self.max_temperatures.append(round(weather.temperature('celsius')['max']))
+            self.daily_weather_status.append(weather.detailed_status)
+            self.daily_min_temps.append(round(weather.temperature('celsius')['min']))
+            self.daily_max_temps.append(round(weather.temperature('celsius')['max']))
             if self.day[i].startswith('0'): self.day[i] = self.day[i][1:]
-            if self.sunrise_time[i].startswith('0'): self.sunrise_time[i] = self.sunrise_time[i][1:]
-            if self.sunset_time[i].startswith('0'): self.sunset_time[i] = self.sunset_time[i][1:]
             i+=1
 
     #Setting up Actions after choosing a city
@@ -158,9 +195,13 @@ class MainWindow(QtWidgets.QWidget):
         self.get_weather()
         self.cityLabel.setText(self.city)
         self.cityLabel.show()
-        self.today_status.setText(self.weather_status[0])
-        self.today_status.show()
+        self.status_of_today.setText(self.daily_weather_status[0])
+        self.status_of_today.show()
         self.temperature_now.show()
+        self.sunrise_time.show()
+        self.sunset_time.show()
+        self.feels_like_of_today.show()
+        self.wind_speed.show()
 
     def textEdited(self):
         if self.lineEdit_searching.text() == '':
