@@ -14,7 +14,7 @@ class MainWindow(QtWidgets.QWidget):
         self.TitleLogo = QtGui.QIcon('.\\icons\\TitleLogo.png')
         self.setWindowIcon(self.TitleLogo)
         self.time = datetime.datetime.now().hour
-        if 6 <= self.time <= 19:
+        if 6 <= self.time <= 20:
             self.setStyleSheet('''
                                 background-color: #FFFFFF;
                                 font-color: black;''')
@@ -44,18 +44,18 @@ class MainWindow(QtWidgets.QWidget):
         """
 
         #Setting up widgets
-        self.lineEdit_searching = QtWidgets.QLineEdit(self)
-        self.lineEdit_searching.setPlaceholderText('Enter city')
-        self.lineEdit_searching.setFixedSize(300,20)
-        lineEdit_searching_X_geo =int((self.width()-self.lineEdit_searching.width())//2)
-        lineEdit_searching_Y_geo =int((self.height()-self.lineEdit_searching.height())//2)
-        self.lineEdit_searching.setGeometry(lineEdit_searching_X_geo,lineEdit_searching_Y_geo , self.lineEdit_searching.width(), self.lineEdit_searching.height())
-        self.lineEdit_searching.textEdited.connect(self.textEdited)
+        self.search_lineEdit = QtWidgets.QLineEdit(self)
+        self.search_lineEdit.setPlaceholderText('Enter city')
+        self.search_lineEdit.setFixedSize(300, 20)
+        search_lineEdit_X_geo =int((self.width() - self.search_lineEdit.width()) // 2)
+        search_lineEdit_Y_geo =int((self.height() - self.search_lineEdit.height()) // 2)
+        self.search_lineEdit.setGeometry(search_lineEdit_X_geo, search_lineEdit_Y_geo, self.search_lineEdit.width(), self.search_lineEdit.height())
+        self.search_lineEdit.textEdited.connect(self.textEdited)
 
         self.citiesTable_widget = QtWidgets.QListView(self)
         self.citiesTable_widget.setFixedSize(300,200)
         citiesTable_widget_x_geo = int((self.width() - self.citiesTable_widget.width()) // 2)
-        citiesTable_widget_Y_geo = int((self.height() - self.lineEdit_searching.height())// 2 + self.lineEdit_searching.height())
+        citiesTable_widget_Y_geo = int((self.height() - self.search_lineEdit.height()) // 2 + self.search_lineEdit.height())
         self.citiesTable_widget.setGeometry(citiesTable_widget_x_geo, citiesTable_widget_Y_geo , self.citiesTable_widget.width(), self.citiesTable_widget.height())
         self.citiesTable_widget.setMovement(0) #Preventing moving of lines
         self.citiesTable_widget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
@@ -168,7 +168,7 @@ class MainWindow(QtWidgets.QWidget):
 
     def find_suitable_cities(self):
         self.suitable_cities = []
-        city = self.lineEdit_searching.text().title()
+        city = self.search_lineEdit.text().title()
         if city == '': city = '0'
 
         if  97 <= ord(city.lower()[0]) <= 102:
@@ -234,7 +234,7 @@ class MainWindow(QtWidgets.QWidget):
             i+=1
     #Setting up Actions after choosing a city
     def entered(self, index):
-        self.lineEdit_searching.hide()
+        self.search_lineEdit.hide()
         self.citiesTable_widget.hide()
         self.get_weather()
 
@@ -301,7 +301,7 @@ class MainWindow(QtWidgets.QWidget):
         self.day_mn_temp1.setNum(self.daily_min_temps[1]), self.day_mn_temp2.setNum(self.daily_min_temps[2]), self.day_mn_temp3.setNum(self.daily_min_temps[3]), self.day_mn_temp4.setNum(self.daily_min_temps[4]), self.day_mn_temp5.setNum(self.daily_min_temps[5]), self.day_mn_temp6.setNum(self.daily_min_temps[6]), self.day_mn_temp7.setNum(self.daily_min_temps[7]),
         self.day_mn_temp1.show(), self.day_mn_temp2.show(), self.day_mn_temp3.show(), self.day_mn_temp4.show(), self.day_mn_temp5.show(), self.day_mn_temp6.show(), self.day_mn_temp7.show()
     def textEdited(self):
-        if self.lineEdit_searching.text() == '':
+        if self.search_lineEdit.text() == '':
             self.citiesTable_widget.hide()
         else: self.citiesTable_widget.show()
         self.container_for_cities.clear() #Очищаем таблицу от вариантов
@@ -708,8 +708,8 @@ class MainWindow(QtWidgets.QWidget):
         self.day_status1.hide(),self.day_status2.hide(), self.day_status3.hide(), self.day_status4.hide(), self.day_status5.hide(), self.day_status6.hide(), self.day_status7.hide()
         self.day_mx_temp1.hide(),self.day_mx_temp2.hide(), self.day_mx_temp3.hide(), self.day_mx_temp4.hide(), self.day_mx_temp5.hide(), self.day_mx_temp6.hide(), self.day_mx_temp7.hide()
         self.day_mn_temp1.hide(),self.day_mn_temp2.hide(), self.day_mn_temp3.hide(), self.day_mn_temp4.hide(), self.day_mn_temp5.hide(), self.day_mn_temp6.hide(), self.day_mn_temp7.hide()
-        self.lineEdit_searching.clear()
-        self.lineEdit_searching.show()
+        self.search_lineEdit.clear()
+        self.search_lineEdit.show()
 
 app = QtWidgets.QApplication(sys.argv)
 window = MainWindow()
